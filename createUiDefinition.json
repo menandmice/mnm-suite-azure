@@ -1,0 +1,560 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+    "handler": "Microsoft.Compute.MultiVm",
+    "version": "0.1.2-preview",
+    "parameters": {
+      "basics": [
+        {
+          "name": "vmName",
+          "type": "Microsoft.Common.TextBox",
+          "label": "Virtual machine name",
+          "toolTip": "Please input the desired name of your virtual machine.",
+          "defaultValue": "menandmice",
+          "constraints": {
+            "required": true,
+            "regex": "^[a-z0-9A-Z-]{3,79}$",
+            "validationMessage": "The Virtual Machine name must be between 3 and 79 characters long and contain letters, numbers and hyphens only."
+          }
+        }
+      ],
+      "steps": [
+        {
+          "name": "VirtualMachineSettings",
+          "label": "Virtual Machine",
+          "subLabel": {
+            "preValidation": "Configure virtual machine",
+            "postValidation": "Done"
+          },
+          "bladeTitle": "Virtual Machine Settings",
+          "elements": [
+            {
+              "name": "windowsOSVersion",
+              "type": "Microsoft.Common.DropDown",
+              "label": "Windows operating system",
+              "defaultValue": "Windows Server 2016",
+              "toolTip": "Please choose the desired Windows operating system for the virtual machine.",
+              "constraints": {
+                "allowedValues": [
+                  {
+                    "label": "Windows Server 2016",
+                    "value": "2016-Datacenter"
+                  },
+                  {
+                    "label": "Windows Server 2012 R2",
+                    "value": "2012-R2-Datacenter"
+                  },
+                  {
+                    "label": "Windows Server 2012",
+                    "value": "2012-Datacenter"
+                  },
+                  {
+                    "label": "Windows Server 2008 R2",
+                    "value": "2008-R2-SP1"
+                  }
+                ],
+                "required": true
+              },
+              "visible": true
+            },
+            {
+              "name": "vmSize",
+              "type": "Microsoft.Compute.SizeSelector",
+              "label": "Virtual machine size",
+              "toolTip": "\"Please select the desired size of the virtual machine. For more information see: <a href=\"https://azure.microsoft.com/en-us/pricing/details/virtual-machines/windows/ \">Virtual machine sizes",
+              "Service": "Tiers\",",
+              "recommendedSizes": [
+                "Standard_D1",
+                "Standard_D1_v2"
+              ],
+              "constraints": {
+                "allowedSizes": [
+                  "Standard_D1",
+                  "Standard_D2",
+                  "Standard_D3",
+                  "Standard_D1_v2",
+                  "Standard_D2_v2",
+                  "Standard_D3_v2",
+                  "Standard_D2_v3",
+                  "Standard_D4_v3",
+                  "Standard_D8_v3",
+                  "Standard_D2s_v3",
+                  "Standard_D4s_v3",
+                  "Standard_D8s_v3"
+                ],
+                "excludedSizes": [],
+                "numAvailabilityZonesRequired": 3,
+                "zone": "3"
+              },
+              "options": {
+                "hideDiskTypeFilter": false
+              },
+              "osPlatform": "Windows",
+              "imageReference": {
+                "publisher": "MicrosoftWindowsServer",
+                "offer": "WindowsServer",
+                "sku": "[basics('windowsOSVersion')]"
+              },
+              "count": 1,
+              "visible": true
+            },
+            {
+              "name": "storageAccount",
+              "type": "Microsoft.Storage.StorageAccountSelector",
+              "label": "Diagnostic storage account",
+              "toolTip": "Storage Account for the Virtual Machine's diagnostics",
+              "defaultValue": {
+                "type": "Standard_LRS",
+                "name": "[concat(replace(toLower(basics('vmName')), '-', ''), take(replace(guid(), '-', ''), 10))]"
+              },
+              "constraints": {
+                "allowedTypes": [
+                  "Standard_LRS",
+                  "Standard_GRS"
+                ]
+              }
+            },
+            {
+              "name": "vmAccountSection",
+              "type": "Microsoft.Common.Section",
+              "label": "Local administrator account",
+              "elements": [
+                {
+                  "name": "adminUsername",
+                  "type": "Microsoft.Compute.UserNameTextBox",
+                  "label": "Username",
+                  "toolTip": "Please provide credentials for the local administrator account on the virtual machine.",
+                  "osPlatform": "Windows",
+                  "constraints": {
+                    "required": true
+                  }
+                },
+                {
+                  "name": "adminPassword",
+                  "type": "Microsoft.Compute.CredentialsCombo",
+                  "label": {
+                    "password": "Password",
+                    "confirmPassword": "Confirm password"
+                  },
+                  "toolTip": {
+                    "password": "Please provide credentials for the local administrator account on the virtual machine. "
+                  },
+                  "constraints": {
+                    "required": true,
+                    "customPasswordRegex": "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$",
+                    "customValidationMessage": "The password must contain at least 8 characters, with at least 1 letter and 1 number."
+                  },
+                  "options": {
+                    "hideConfirmation": false
+                  },
+                  "osPlatform": "Windows",
+                  "visible": true
+                }
+              ],
+              "visible": true
+            }
+          ]
+        },
+        {
+          "name": "Network",
+          "label": "Networking",
+          "subLabel": {
+            "preValidation": "Configure virtual machine network settings",
+            "postValidation": "Done"
+          },
+          "bladeTitle": "Network Settings",
+          "elements": [
+            {
+              "name": "VirtualNetworkInfobox",
+              "type": "Microsoft.Common.InfoBox",
+              "visible": true,
+              "options": {
+                "icon": "Warning",
+                "text": "To join an Active Directory domain, the selected Virtual Network must be able to communicate with the respective domain controller."
+              }
+            },
+            {
+              "name": "virtualNetwork",
+              "type": "Microsoft.Network.VirtualNetworkCombo",
+              "label": {
+                "virtualNetwork": "Virtual network",
+                "subnets": "Subnets"
+              },
+              "toolTip": {
+                "virtualNetwork": "Name for the virtual network",
+                "subnets": "Subnets for the virtual network"
+              },
+              "defaultValue": {
+                "name": "mmNet",
+                "addressPrefixSize": "/16"
+              },
+              "constraints": {
+                "minAddressPrefixSize": "/16"
+              },
+              "options": {
+                "hideExisting": false
+              },
+              "subnets": {
+                "subnet1": {
+                  "label": "Subnet",
+                  "defaultValue": {
+                    "name": "mmSubnet",
+                    "addressPrefixSize": "/24"
+                  },
+                  "constraints": {
+                    "minAddressPrefixSize": "/24",
+                    "minAddressCount": 12,
+                    "requireContiguousAddresses": true
+                  }
+                }
+              },
+              "visible": true
+            },
+            {
+              "name": "nsgSection",
+              "type": "Microsoft.Common.Section",
+              "label": "Network Security Group",
+              "elements": [
+                {
+                  "name": "nsgName",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Name of the Network Security Group",
+                  "defaultValue": "menandmiceNsg",
+                  "toolTip": "Use only allowed characters",
+                  "constraints": {
+                    "required": true,
+                    "regex": "^[a-zA-Z]{3,15}$",
+                    "validationMessage": "Only alphabetical characters are allowed, and the value must be 3-15 characters long."
+                  },
+                  "visible": true
+                },
+                {
+                  "name": "nsgHTTPAccess",
+                  "type": "Microsoft.Common.OptionsGroup",
+                  "label": "Allow HTTP access to the machine",
+                  "defaultValue": "Allow",
+                  "toolTip": "This will open port 80 for public traffic",
+                  "constraints": {
+                    "allowedValues": [
+                      {
+                        "label": "Allow",
+                        "value": "Allow"
+                      },
+                      {
+                        "label": "Deny",
+                        "value": "Deny"
+                      }
+                    ],
+                    "required": true
+                  },
+                  "visible": true
+                },
+                {
+                  "name": "nsgMMMCAccess",
+                  "type": "Microsoft.Common.OptionsGroup",
+                  "label": "Allow Men & Mice Management Console access to the machine",
+                  "defaultValue": "Allow",
+                  "toolTip": "This will open port 1231 for public traffic",
+                  "constraints": {
+                    "allowedValues": [
+                      {
+                        "label": "Allow",
+                        "value": "Allow"
+                      },
+                      {
+                        "label": "Deny",
+                        "value": "Deny"
+                      }
+                    ],
+                    "required": true
+                  },
+                  "visible": true
+                }
+              ],
+              "visible": true
+            },
+            {
+              "name": "pdnsSection",
+              "type": "Microsoft.Common.Section",
+              "label": "Public DNS Name",
+              "elements": [
+                {
+                  "name": "dnsLabelPrefix",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Public DNS name prefix",
+                  "toolTip": "Prefix for the public DNS name of the machine",
+                  "defaultValue": "[toLower(basics('vmName'))]",
+                  "constraints": {
+                    "required": true,
+                    "regex": "^[a-zA-Z]{3,79}$",
+                    "validationMessage": "The dns prefix must be between 3 and 79 characters long and contain only letters"
+                  }
+                }
+              ],
+              "visible": true
+            }
+          ]
+        },
+        {
+          "name": "DatabaseConfiguration",
+          "label": "Database Configuration",
+          "subLabel": {
+            "preValidation": "Configure Database Settings",
+            "postValidation": "Done"
+          },
+          "bladeTitle": "Database Settings",
+          "elements": [
+            {
+              "name": "DbInfobox",
+              "type": "Microsoft.Common.InfoBox",
+              "visible": true,
+              "options": {
+                "icon": "Info",
+                "text": "The Men & Mice Suite uses an Azure SQL database which will be created during the deployment."
+              }
+            },
+            {
+              "name": "dbSection",
+              "type": "Microsoft.Common.Section",
+              "label": "Azure Database",
+              "elements": [
+                {
+                  "name": "dbServer",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Prefix for the name of the Azure SQL server",
+                  "defaultValue": "menandmice-azuresql",
+                  "constraints": {
+                    "required": true
+                  }
+                },
+                {
+                  "name": "dbInstance",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Name of the Database Instance",
+                  "defaultValue": "mmSuite",
+                  "constraints": {
+                    "required": true
+                  }
+                },
+                {
+                  "name": "dbUsername",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Azure SQL server administrator username",
+                  "defaultValue": "mmSuiteDBUser",
+                  "constraints": {
+                    "required": true
+                  }
+                },
+                {
+                  "name": "dbUserPassword",
+                  "type": "Microsoft.Common.PasswordBox",
+                  "label": {
+                    "password": "Azure SQL server administrator password",
+                    "confirmPassword": "Confirm password"
+                  },
+                  "toolTip": "",
+                  "constraints": {
+                    "required": true,
+                    "regex": "^((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])|(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*])|(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*])|(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{8,72}$",
+                    "validationMessage": "Password must be at least 8 characters long and have 3 out of the following: one number, one lower case, one upper case, or one special character"
+                  },
+                  "options": {
+                    "hideConfirmation": false
+                  },
+                  "visible": true
+                },
+                {
+                  "name": "dbEdition",
+                  "type": "Microsoft.Common.DropDown",
+                  "label": "Database Edition",
+                  "defaultValue": "Standard",
+                  "toolTip": "This determines the speed and capacity of your database. For more information see: <a href=\"https://docs.microsoft.com/en-us/azure/sql-database/sql-database-service-tiers-dtu \">SQL Service Tiers",
+                  "constraints": {
+                    "allowedValues": [
+                      {
+                        "label": "Standard",
+                        "value": "Standard"
+                      },
+                      {
+                        "label": "Premium",
+                        "value": "Premium"
+                      }
+                    ],
+                    "required": true
+                  },
+                  "visible": true
+                }
+              ],
+              "visible": true
+            }
+          ]
+        },
+        {
+          "name": "AccountCredentials",
+          "label": "Active directory",
+          "subLabel": {
+            "preValidation": "Configure active directory credentials",
+            "postValidation": "Done"
+          },
+          "bladeTitle": "Active Directory Credentials",
+          "elements": [
+            {
+              "name": "credentialsInfobox",
+              "type": "Microsoft.Common.InfoBox",
+              "visible": true,
+              "options": {
+                "icon": "Info",
+                "text": "By joining the virtual machine to \n an Active Directory Domain, the Men & Mice DNS / DHCP controllers can be run under domain service accounts and the DNS / DHCP servers can be managed agent-free. Additionally, DNS / DHCP servers can be automatically detected in the first use wizard."
+              }
+            },
+            {
+              "name": "serviceAccountTextblock",
+              "type": "Microsoft.Common.TextBlock",
+              "visible": true,
+              "options": {
+                "text": "Click the link below to learn more about agent-free setups.",
+                "link": {
+                  "label": "Agent-free setup",
+                  "uri": "https://docs.menandmice.com/pages/viewpage.action?pageId=6361085"
+                }
+              }
+            },
+            {
+              "name": "domainJoin",
+              "type": "Microsoft.Common.OptionsGroup",
+              "label": "Join Virtual machine to Active Directory?",
+              "defaultValue": "Yes",
+              "toolTip": "",
+              "constraints": {
+                "allowedValues": [
+                  {
+                    "label": "Yes",
+                    "value": "Join"
+                  },
+                  {
+                    "label": "No",
+                    "value": "Skip"
+                  }
+                ],
+                "required": true
+              },
+              "visible": true
+            },
+            {
+              "name": "domainUserSection",
+              "type": "Microsoft.Common.Section",
+              "label": "Active directory administrator account",
+              "elements": [
+                {
+                  "name": "domainUsername",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Domain user",
+                  "defaultValue": "Yourdomain\\Username",
+                  "toolTip": "Enter the username (with domain prefix) to join domain",
+                  "constraints": {
+                    "required": "[equals(steps('AccountCredentials').domainJoin, 'Join')]",
+                    "regex": "^[a-zA-Z0-9\\.\\-\\_]{1,64}[\\\\][a-zA-Z0-9\\.\\-\\_]{1,64}$",
+                    "validationMessage": "Input must be of the format Domain name\\Domain administrator account"
+                  },
+                  "visible": "[equals(steps('AccountCredentials').domainJoin, 'Join')]"
+                },
+                {
+                  "name": "domainPassword",
+                  "type": "Microsoft.Common.PasswordBox",
+                  "label": {
+                    "password": "Domain user password",
+                    "confirmPassword": "Confirm password"
+                  },
+                  "toolTip": "Enter the password to join your domain",
+                  "constraints": {
+                    "required": "[equals(steps('AccountCredentials').domainJoin, 'Join')]"
+                  },
+                  "options": {
+                    "hideConfirmation": false
+                  },
+                  "visible": "[equals(steps('AccountCredentials').domainJoin, 'Join')]"
+                }
+              ],
+              "visible": "[equals(steps('AccountCredentials').domainJoin, 'Join')]"
+            },
+            {
+              "name": "domainServiceAccountSection",
+              "type": "Microsoft.Common.Section",
+              "label": "Service account",
+              "elements": [
+                {
+                  "name": "serviceAccountUsername",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Service account username",
+                  "defaultValue": "Yourdomain\\serviceAccountUsername",
+                  "toolTip": "Enter the username (with domain prefix) for the service account",
+                  "constraints": {
+                    "required": "[equals(steps('AccountCredentials').domainJoin, 'Join')]",
+                    "regex": "^[a-zA-Z0-9\\.\\-\\_]{1,64}[\\\\][a-zA-Z0-9\\.\\-\\_]{1,64}$",
+                    "validationMessage": "Input must be of the format Domain name\\Service account name"
+                  },
+                  "visible": "[equals(steps('AccountCredentials').domainJoin, 'Join')]"
+                },
+                {
+                  "name": "serviceAccountPassword",
+                  "type": "Microsoft.Common.PasswordBox",
+                  "label": {
+                    "password": "Service account password",
+                    "confirmPassword": "Confirm password"
+                  },
+                  "constraints": {
+                    "required": "[equals(steps('AccountCredentials').domainJoin, 'Join')]"
+                  },
+                  "options": {
+                    "hideConfirmation": false
+                  },
+                  "visible": "[equals(steps('AccountCredentials').domainJoin, 'Join')]"
+                }
+              ],
+              "visible": "[equals(steps('AccountCredentials').domainJoin, 'Join')]"
+            }
+          ]
+        }
+      ],
+
+      "outputs": {
+
+        "vmName": "[basics('vmName')]",
+
+        "vmWindowsOSVersion": "[steps('VirtualMachineSettings').windowsOSVersion]",
+        "vmSize": "[steps('VirtualMachineSettings').vmSize]",
+        "vmAdminUsername": "[steps('VirtualMachineSettings').vmAccountSection.adminUsername]",
+        "vmAdminPassword": "[steps('VirtualMachineSettings').vmAccountSection.adminPassword.password]",
+        "location": "[location()]",
+
+        "adJoin": "[steps('AccountCredentials').domainJoin]",
+        "adUsername": "[steps('AccountCredentials').domainUserSection.domainUsername]",
+        "adPassword": "[steps('AccountCredentials').domainUserSection.domainPassword]",
+        "adServiceAccountName": "[steps('AccountCredentials').domainServiceAccountSection.serviceAccountUsername]",
+        "adServiceAccountPassword": "[steps('AccountCredentials').domainServiceAccountSection.serviceAccountPassword]",
+
+        "virtualNetworkNewOrExisting": "[steps('Network').virtualNetwork.newOrExisting]",
+        "virtualNetworkName": "[steps('Network').virtualNetwork.name]",
+        "addressPrefixes": "[steps('Network').virtualNetwork.addressPrefixes]",
+        "subnetName": "[steps('Network').virtualNetwork.subnets.subnet1.name]",
+        "subnetPrefix": "[steps('Network').virtualNetwork.subnets.subnet1.addressPrefix]",
+        "virtualNetworkResourceGroupName": "[steps('Network').virtualNetwork.resourceGroup]",
+
+        "dnsLabelPrefix": "[steps('Network').pdnsSection.dnsLabelPrefix]",
+
+        "nsgName": "[steps('Network').nsgSection.nsgName]",
+        "nsgHTTPAccess": "[steps('Network').nsgSection.nsgHTTPAccess]",
+        "nsgMMMCAccess": "[steps('Network').nsgSection.nsgMMMCAccess]",
+
+        "sqlServerNamePrefix": "[steps('DatabaseConfiguration').dbSection.dbServer]",
+        "sqlServerAdminUsername": "[steps('DatabaseConfiguration').dbSection.dbUsername]",
+        "sqlServerAdminPassword": "[steps('DatabaseConfiguration').dbSection.dbUserPassword]",
+        "sqlDatabaseName": "[steps('DatabaseConfiguration').dbSection.dbInstance]",
+        "sqlDatabaseEdition": "[steps('DatabaseConfiguration').dbSection.dbEdition]",
+
+        "storageNewOrExisting": "[steps('VirtualMachineSettings').storageAccount.newOrExisting]",
+        "storageAccountName": "[steps('VirtualMachineSettings').storageAccount.name]",
+        "storageAccountType": "[steps('VirtualMachineSettings').storageAccount.type]",
+        "storageAccountResourceGroupName": "[steps('VirtualMachineSettings').storageAccount.resourceGroup]"
+      }
+    }
+}
