@@ -323,7 +323,9 @@
                   "label": "Prefix for the name of the Azure SQL server",
                   "defaultValue": "menandmice-azuresql",
                   "constraints": {
-                    "required": true
+                    "required": true,
+                    "regex": "^[a-z0-9A-Z-]{8,79}$",
+                    "validationMessage": "The Virtual Machine name must be between 8 and 79 characters long and contain letters, numbers and hyphens only."
                   }
                 },
                 {
@@ -332,7 +334,9 @@
                   "label": "Name of the Database Instance",
                   "defaultValue": "mmSuite",
                   "constraints": {
-                    "required": true
+                    "required": true,
+                    "regex": "^[a-z0-9A-Z-]{7,20}$",
+                    "validationMessage": "The Virtual Machine name must be between 7 and 20 characters long and contain letters, numbers and hyphens only."
                   }
                 },
                 {
@@ -341,7 +345,9 @@
                   "label": "Azure SQL server administrator username",
                   "defaultValue": "mmSuiteDBUser",
                   "constraints": {
-                    "required": true
+                    "required": true,
+                    "regex": "^[a-z0-9A-Z]{13,20}$",
+                    "validationMessage": "The Virtual Machine name must be between 13 and 20 characters long and contain letters and numbers only."
                   }
                 },
                 {
@@ -404,18 +410,6 @@
               "options": {
                 "icon": "Info",
                 "text": "By joining the virtual machine to \n an Active Directory Domain, the Men & Mice DNS / DHCP controllers can be run under domain service accounts and the DNS / DHCP servers can be managed agent-free. Additionally, DNS / DHCP servers can be automatically detected in the first use wizard."
-              }
-            },
-            {
-              "name": "serviceAccountTextblock",
-              "type": "Microsoft.Common.TextBlock",
-              "visible": true,
-              "options": {
-                "text": "Click the link below to learn more about agent-free setups.",
-                "link": {
-                  "label": "Agent-free setup",
-                  "uri": "https://docs.menandmice.com/pages/viewpage.action?pageId=6361085"
-                }
               }
             },
             {

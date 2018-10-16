@@ -384,7 +384,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_A2"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[parameters('vmName')]",
@@ -412,7 +412,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": true,
-            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2017-06-01').primaryEndpoints.blob]"
+            "storageUri": "[reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2017-06-01').primaryEndpoints.blob]"
           }
         }
       },
@@ -448,7 +448,7 @@
     {
       "name": "[variables('menandmice-azuresqlName')]",
       "type": "Microsoft.Sql/servers",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "apiVersion": "2014-04-01-preview",
       "dependsOn": [ ],
       "tags": {
@@ -462,7 +462,7 @@
         {
           "name": "AllowAllWindowsAzureIps",
           "type": "firewallrules",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
             "[resourceId('Microsoft.Sql/servers', variables('menandmice-azuresqlName'))]"
@@ -475,7 +475,7 @@
         {
           "name": "[parameters('sqlDatabaseName')]",
           "type": "databases",
-          "location": "[resourceGroup().location]",
+          "location": "[parameters('location')]",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
             "[resourceId('Microsoft.Sql/servers', variables('menandmice-azuresqlName'))]"
